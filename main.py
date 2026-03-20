@@ -6,15 +6,16 @@ from starlette.middleware.cors import CORSMiddleware
 from sql_app import models
 from sql_app.database import engine
 from routers import auth, users, utils, websocket
+from routers import websocket_reminder
+from routers.websocket_reminder import startup_event
 
-# 建表
 models.Base.metadata.create_all(bind=engine)
 app = FastAPI(routes=websocket.routes)
 app.include_router(auth.router)
 app.include_router(users.router)
 app.include_router(utils.router)
+app.include_router(websocket_reminder.router)
 
-# 跨域配置
 origins = ['*']
 app.add_middleware(
     CORSMiddleware,
@@ -23,6 +24,11 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+@app.on_event("startup")
+async def on_startup():
+    await startup_event()
 
 
 @app.get("/")
