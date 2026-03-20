@@ -69,9 +69,9 @@ async def get_current_active_user(current_user: schemas_user.User = Depends(get_
     return current_user
 
 
-# 角色验证
+# 角色验证 - 允许所有活跃用户访问
 def role_check(current_user: schemas_user.User = Depends(get_current_user)):
-    if current_user.role != "admin":
+    if not current_user.is_active:
         raise HTTPException(status_code=403, detail="Permission denied")
     return current_user
 

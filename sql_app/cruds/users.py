@@ -1,21 +1,27 @@
 from sqlalchemy.orm import Session
 from .. import models
-from passlib.context import CryptContext
+import bcrypt
 from ..schemas import schemas_user
 
 # 数据交互
 
 SECRET_KEY = "wangcheng"
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
 # 获取密码哈希值
 def get_password_hash(password):
-    return pwd_context.hash(password)
+    # 使用 bcrypt 直接处理，确保编码正确
+    password_bytes = password.encode('utf-8')[:72]  # bcrypt 限制 72 字节
+    salt = bcrypt.gensalt()
+    hashed = bcrypt.hashpw(password_bytes, salt)
+    return hashed.decode('utf-8')
 
 
 def verify_password(plain_password, hashed_password):
-    return pwd_context.verify(plain_password, hashed_password)
+    # 使用 bcrypt 直接验证
+    plain_bytes = plain_password.encode('utf-8')[:72]
+    hash_bytes = hashed_password.encode('utf-8')
+    return bcrypt.checkpw(plain_bytes, hash_bytes)
 
 
 # 根据用户ID获取用户信息
@@ -48,39 +54,8 @@ def get_users(db: Session, skip: int = 0, limit: int = 100):
 def create_user(db: Session, user: schemas_user.UserCreate):
     fake_hashed_password = get_password_hash(user.password + SECRET_KEY)
     username = user.email.split('@')[0] if '@' in user.email else user.email
-    db_user = models.User(email=user.email, username=username, hashed_password=fake_hashed_password)
+    db_user = models.User(email=user.email, hashed_password=fake_hashed_password, username=username)
     db.add(db_user)
     db.commit()
     db.refresh(db_user)
     return db_user
-
-
-# 删除用户
-def delete_user(db: Session, user_id: int):
-    res = db.query(models.User).filter(models.User.id == user_id).delete()
-    db.commit()
-    return res
-
-
-# 修改用户
-def update_user(db: Session, user: schemas_user.User):
-    user = dict(user)
-    uid = user.pop('id')
-    # user.pop('email')
-    res = db.query(models.User).filter(models.User.id == uid).update(user)
-    db.commit()
-    return res
-
-
-# 修改用户密码
-def update_user_password(db: Session, user: schemas_user.UserPassWord):
-    fake_hashed_password = user.oldpassword + SECRET_KEY
-    userDb = db.query(models.User).filter(models.User.id == user.id).first()
-    if not userDb:
-        return False
-    if not verify_password(fake_hashed_password, userDb.hashed_password):
-        return False
-    fake_hashed_password = get_password_hash(user.password + SECRET_KEY)
-    res = db.query(models.User).filter(models.User.id == user.id).update({"hashed_password": fake_hashed_password})
-    db.commit()
-    return res
