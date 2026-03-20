@@ -21,7 +21,7 @@ class User(UserBase):
     frequency_max: int
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class UserPassWord(BaseModel):
