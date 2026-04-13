@@ -1,0 +1,41 @@
+[run]
+source = .
+omit =
+    tests/*
+    */__pycache__/*
+    */site-packages/*
+    */migrations/*
+    venv/*
+    .venv/*
+    */.idea/*
+    utils/baidupan.py
+    utils/bingImg.py
+    utils/translate.py
+    routers/websocket.py
+    routers/utils.py
+    sql_app/cruds/utils.py
+    sql_app/schemas/schemas_utils.py
+
+[report]
+exclude_lines =
+    pragma: no cover
+    def __repr__
+    raise AssertionError
+    raise NotImplementedError
+    if __name__ == .__main__.:
+    if TYPE_CHECKING:
+    @abstractmethod
+ignore_errors = True
+skip_empty = True
+precision = 2
+
+[html]
+directory = htmlcov
+title = FastAPI Test Coverage Report
+
+[xml]
+output = coverage.xml
+
+[json]
+output = coverage.json
+show_contexts = true
